@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple To-Do App</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+        #todo-form { margin-bottom: 20px; }
+        #todos { list-style: none; padding: 0; }
+        .todo-item { padding: 10px; border: 1px solid #ddd; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Simple To-Do App</h1>
+    <form id="todo-form">
+        <input type="text" id="todo-input" placeholder="Add new todo" required>
+        <button type="submit">Add</button>
+    </form>
+    <ul id="todos"></ul>
+
+    <script>
+        document.getElementById('todo-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const input = document.getElementById('todo-input');
+            await fetch('/todos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: input.value })
+            });
+            input.value = '';
+            loadTodos();
+        });
+
+        async function loadTodos() {
+            const response = await fetch('/todos');
+            const todos = await response.json();
+            const list = document.getElementById('todos');
+            list.innerHTML = todos.map(todo => 
+                `<li class="todo-item">${todo.text}</li>`
+            ).join('');
+        }
+
+        loadTodos();
+    </script>
+</body>
+</html>
