@@ -16,19 +16,20 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v2
 
+      # Log in to Docker Hub using username and token (recommended)
+      - name: Docker Login
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}  # 这里改用 DOCKER_TOKEN
+
       # Build and push personal website
       - name: Build personal website image
         run: docker build -t my-app:latest .
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Push personal website image
+      - name: Tag and push personal website image
         run: |
-          IMAGE_NAME=docker.io/${{ secrets.DOCKER_USERNAME }}/my-app:latest
+          IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/my-app:latest
           docker tag my-app:latest $IMAGE_NAME
           docker push $IMAGE_NAME
 
@@ -36,13 +37,13 @@ jobs:
       - name: Build todo app image
         run: docker build -t my-todo:latest ./todo-app
 
-      - name: Push todo app image
+      - name: Tag and push todo app image
         run: |
-          TODO_IMAGE_NAME=docker.io/${{ secrets.DOCKER_USERNAME }}/my-todo:latest
+          TODO_IMAGE_NAME=${{ secrets.DOCKER_USERNAME }}/my-todo:latest
           docker tag my-todo:latest $TODO_IMAGE_NAME
           docker push $TODO_IMAGE_NAME
 
-      # Deploy both applications
+      # Deploy both applications via SSH
       - name: SSH to server and deploy
         uses: appleboy/ssh-action@v0.1.10
         with:
@@ -50,7 +51,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+            # 注意：这里不需要再次 docker login，因为 pull 是 public 的操作
             docker-compose down
             docker-compose pull
             docker-compose up -d
